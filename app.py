@@ -90,7 +90,7 @@ collection.add(
 
 
 
-@app.route('/query', methods=['POST'])
+"""@app.route('/query', methods=['POST'])
 def query_collection():
     # Vérifiez l'en-tête Content-Type
     if request.headers.get('Content-Type') != 'application/json':
@@ -122,4 +122,42 @@ def query_collection():
         return jsonify({'error': 'An error occurred', 'details': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=5000)
+    app.run(host='127.0.0.1', port=5000)"""
+
+############# PROD ############
+
+@app.route('/query', methods=['POST'])
+def query_collection():
+    
+    if request.headers.get('Content-Type') != 'application/json':
+        return jsonify({'error': 'Content-Type must be application/json'}), 415
+
+    try:
+        
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'Invalid JSON'}), 400
+
+       
+        query_texts = data.get('query_texts', [])
+        n_results = data.get('n_results', 3)
+
+        
+        results = collection.query(query_texts=query_texts, n_results=n_results)
+
+        
+        video_ids = results.get('ids', [[]])[0] 
+        if not isinstance(video_ids, list):
+            video_ids = []  
+
+        # Return IDs
+        return jsonify({'video_ids': video_ids})
+
+    except Exception as e:
+        return jsonify({'error': 'An error occurred', 'details': str(e)}), 500
+
+if __name__ == '__main__':
+    #Prod
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
+
